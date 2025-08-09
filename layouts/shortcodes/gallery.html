@@ -51,13 +51,6 @@
  	[params] resourceDir. -->
 {{ $thumbnailResourceDir := printf "%s%s" (.Site.Params.resourceDir | default "resources") "/_gen/images/" }}
 
-<!--
-Ordinal increases every time this shortcode is used in a document
-Ordinal: {{ .Ordinal}}
--->
-{{ $galleryId := (printf "gallery-%v-%v" .Page.File.UniqueID .Ordinal)}}
-{{ $galleryWrapperId := (printf "gallery-%v-%v-wrapper" .Page.File.UniqueID .Ordinal)}}
-
 <!-- Load jquery, jquery-lazy, swipebox and justified_gallery only once per page -->
 {{ if not (.Page.Scratch.Get "galleryLoaded") }}
 	{{ .Page.Scratch.Set "galleryLoaded" true }}
