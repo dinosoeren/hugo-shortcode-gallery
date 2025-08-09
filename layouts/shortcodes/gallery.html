@@ -51,12 +51,17 @@
  	[params] resourceDir. -->
 {{ $thumbnailResourceDir := printf "%s%s" (.Site.Params.resourceDir | default "resources") "/_gen/images/" }}
 
+<!--
+Ordinal increases every time this shortcode is used in a document
+Ordinal: {{ .Ordinal}}
+-->
 {{ $galleryId := (printf "gallery-%v-%v" .Page.File.UniqueID .Ordinal)}}
 {{ $galleryWrapperId := (printf "gallery-%v-%v-wrapper" .Page.File.UniqueID .Ordinal)}}
 
-<!-- Load assets only once per page -->
+<!-- Load jquery, jquery-lazy, swipebox and justified_gallery only once per page -->
 {{ if not (.Page.Scratch.Get "galleryLoaded") }}
 	{{ .Page.Scratch.Set "galleryLoaded" true }}
+	<!-- Use relURL to support hugo projects that run in a subdirectory (bug #18) -->
 
 	{{ if $loadJQuery }}
 		<script src="{{ "shortcode-gallery/jquery-3.7.1.min.js" | relURL }}"></script>
@@ -66,11 +71,11 @@
 		<script src="{{ "shortcode-gallery/lazy/jquery.lazy.min.js" | relURL }}"></script>
 	{{ end }}
 
-	<script src="{{ "shortcode-gallery/swipebox/js/jquery.swipebox.min.js" | relURL }}" integrity="sha384-x7SZOzn5sSEEMNqSrAUGhDOSOhM4YmgWgH3X2dzhYGUZEPtECE095pqa3V7Iuvs1" crossorigin="anonymous"></script>
-	<link rel="stylesheet" href="{{ "shortcode-gallery/swipebox/css/swipebox.min.css"| relURL }}" integrity="sha384-TL8XxRhltiGnBQB+n6Ed30t6RCRVE/KTQaQfOOq5n5772120hySFHvi+k203epGT" crossorigin="anonymous" />
+	<script src="{{ "shortcode-gallery/swipebox/js/jquery.swipebox.min.js" | relURL }}"></script>
+	<link rel="stylesheet" href="{{ "shortcode-gallery/swipebox/css/swipebox.min.css"| relURL }}">
 
-	<script src="{{ "shortcode-gallery/justified_gallery/jquery.justifiedGallery.min.js"| relURL }}" integrity="sha384-RqjkDw9rLFgzjooqNY42/KTv+s438kLXd/JdZ3Y3hLB6miZFfP8LzKrnijNdsKqz" crossorigin="anonymous"></script>
-	<link rel="stylesheet" href="{{ "shortcode-gallery/justified_gallery/justifiedGallery.min.css"| relURL }}" integrity="sha384-GprljzBtcWkBFDRRRo6fYmlgP/PshDmktYlVR4Qol/hkmfQ9wz/j+GT938+gT3Gb" crossorigin="anonymous" />
+	<script src="{{ "shortcode-gallery/justified_gallery/jquery.justifiedGallery.min.js"| relURL }}"></script>
+	<link rel="stylesheet" href="{{ "shortcode-gallery/justified_gallery/justifiedGallery.min.css"| relURL }}"/>
 
 	{{ $galleryJs := resources.Get "shortcode-gallery/gallery.js" | resources.Minify | resources.Fingerprint }}
 	<script src="{{ $galleryJs.RelPermalink }}" integrity="{{ $galleryJs.Data.Integrity }}" crossorigin="anonymous"></script>
@@ -78,37 +83,39 @@
 
 {{ $cssOptions := (dict "enlarge" (eq $thumbnailHoverEffect "enlarge")) }}
 {{ $galleryCss := resources.Get "shortcode-gallery/gallery.scss.tpl" | resources.ExecuteAsTemplate "shortcode-gallery/gallery.scss" $cssOptions | toCSS | resources.Minify | resources.Fingerprint }}
-<link rel="stylesheet" href="{{ $galleryCss.RelPermalink }}" integrity="{{ $galleryCss.Data.Integrity }}" crossorigin="anonymous" />
+<link rel="stylesheet" href="{{ $galleryCss.RelPermalink }}" integrity="{{ $galleryCss.Data.Integrity }}" crossorigin="anonymous">
 
 {{ if not (eq $filterOptions "[]") }}
 	{{ $filterbarCss := resources.Get "shortcode-gallery/filterbar.sass" | toCSS | resources.Minify | resources.Fingerprint }}
-	<link rel="stylesheet" href="{{ $filterbarCss.RelPermalink }}" integrity="{{ $filterbarCss.Data.Integrity }}" crossorigin="anonymous" />
+	<link rel="stylesheet" href="{{ $filterbarCss.RelPermalink }}" integrity="{{ $filterbarCss.Data.Integrity }}" crossorigin="anonymous">
 {{ end }}
 
-{{ $expandIcon := resources.Get "shortcode-gallery/font-awesome/expand-alt-solid.svg" | readFile | safeHTML }}
-{{ $compressIcon := resources.Get "shortcode-gallery/font-awesome/compress-alt-solid.svg" | readFile | safeHTML }}
-
-{{ $initOptions := dict
-	"galleryWrapperId" $galleryWrapperId
-	"galleryId" $galleryId
-	"rowHeight" $rowHeight
-	"margins" $margins
-	"randomize" $randomize
-	"lastRow" (.Get "lastRow" | default (.Site.Params.galleryLastRow | default "justify"))
-	"justifiedGalleryParameters" ($justifiedGalleryParameters | default "{}")
-	"swipeboxParameters" ($swipeboxParameters | default "{}")
-	"filterOptions" ($filterOptions | default "[]")
-	"storeSelectedFilterInUrl" $storeSelectedFilterInUrl
-	"previewType" $previewType
-	"expandIcon" $expandIcon
-	"compressIcon" $compressIcon
-}}
-{{ $initScriptContent := partial "shortcode-gallery/init.js.html" $initOptions }}
-{{ $initScript := resources.FromString (printf "shortcode-gallery/gallery-init-%v.js" .Ordinal) $initScriptContent | resources.Minify | resources.Fingerprint }}
-<script src="{{ $initScript.RelPermalink }}" integrity="{{ $initScript.Data.Integrity }}" crossorigin="anonymous"></script>
+<!--
+Ordinal increases every time this shortcode is used in a document
+Ordinal: {{ .Ordinal}}
+-->
+{{ $galleryId := (printf "gallery-%v-%v" .Page.File.UniqueID .Ordinal)}}
+{{ $galleryWrapperId := (printf "gallery-%v-%v-wrapper" .Page.File.UniqueID .Ordinal)}}
 
 <div id="{{ $galleryWrapperId }}" class="gallery-wrapper">
-<div id="{{ $galleryId }}" class="justified-gallery">
+	<span
+		class="gallery-options"
+		style="display: none;"
+		data-gallery-id="{{ $galleryId }}"
+		data-gallery-wrapper-id="{{ $galleryWrapperId }}"
+		data-row-height="{{ $rowHeight }}"
+		data-margins="{{ $margins }}"
+		data-randomize="{{ $randomize }}"
+		data-last-row="{{ .Get "lastRow" | default (.Site.Params.galleryLastRow | default "justify") }}"
+		data-justified-gallery-parameters="{{ $justifiedGalleryParameters | default "{}" | jsonify }}"
+		data-swipebox-parameters="{{ $swipeboxParameters | default "{}" | jsonify }}"
+		data-filter-options="{{ $filterOptions | default "[]" }}"
+		data-store-selected-filter-in-url="{{ $storeSelectedFilterInUrl }}"
+		data-preview-type="{{ $previewType }}"
+		data-expand-icon="{{ resources.Get "shortcode-gallery/font-awesome/expand-alt-solid.svg" | readFile | safeHTML }}"
+		data-compress-icon="{{ resources.Get "shortcode-gallery/font-awesome/compress-alt-solid.svg" | readFile | safeHTML }}"
+	></span>
+	<div id="{{ $galleryId }}" class="justified-gallery">
 	{{ range $original := sort $images "Name" $sortOrder}}
 		{{ if eq $original.ResourceType "image" }}
 
